@@ -44,4 +44,5 @@ jobs:
           app-file: app-debug.apk   # <-- тепер беремо APK з Google Drive
           async: false
           workspace: aos_tests
+          android-api-level: 34
           include-tags: ${{ matrix.tag }}
