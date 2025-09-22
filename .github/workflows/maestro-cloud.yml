@@ -9,6 +9,10 @@ on:
 jobs:
   maestro-cloud:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: [ "purchase", "rootcheck", "login", "onboarding", "check" ]
     outputs:
       app: app/build/outputs/apk/debug
     steps:
@@ -40,3 +44,4 @@ jobs:
           app-file: app-debug.apk   # <-- тепер беремо APK з Google Drive
           async: false
           workspace: aos_tests
+          include-tags: ${{ matrix.tag }}
