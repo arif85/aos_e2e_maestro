@@ -1,0 +1,109 @@
+appId: com.rebbix.modnakasta
+tags: [purchase]
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: close_apptobonus_popup
+- tapOn:
+    id: bottom_tab_profile
+- tapOn: Увійти / Реєстрація
+- runFlow: flows/UserWithoutSavedAddresses.yaml
+- tapOn:
+    id: bottom_tab_catalogue
+- tapOn: Одяг
+- tapOn: Чоловікам
+- tapOn:
+    id: filters_toolbar_btn_text
+- tapOn: Діють переваги Black
+- tapOn: Зі складу Kasta
+- tapOn:
+    id: button_done
+- tapOn:
+    id: filters_toolbar_order_spinner
+- tapOn: Спочатку дешевше
+- repeat:
+    times: 3
+    commands:
+      - swipe:
+         duration: 200
+         direction: UP
+- tapOn:
+    id: button_buy
+    enabled: true
+- tapOn:
+    id: item_product_size_name
+    optional: true #у товару може лишитись в наявності один розмір
+    enabled: true
+- tapOn:
+    id: button_buy_text
+    optional: true #у товару може лишитись в наявності один розмір, із за цього клієнт не показує попап з розмірами відповідно не відображається ця кнопка
+- tapOn:
+    id: bottom_tab_basket
+- tapOn:
+    id: checkout_button_text
+- assertVisible:
+    text: Спосіб доставки
+- tapOn: Доставка до відділень «Нова пошта» по Україні
+- tapOn: Київ
+- tapOn: Пошук
+- inputText: '350'
+- tapOn:
+    id: post_office_address
+- tapOn:
+    id: save_address
+- tapOn:
+    id: save
+- tapOn: Готівкою при отриманні
+- tapOn:
+    id: checkout_button
+- tapOn:
+    id: close_dialog
+    optional: true
+- assertVisible:
+    id: checkout_done_order_id
+- tapOn:
+    id: my_orders_btn
+- tapOn: Замовлення оформлене
+- scrollUntilVisible:
+    element: Скасування замовлення
+    direction: DOWN
+    timeout: 50000
+    speed: 40
+    visibilityPercentage: 100
+- swipe:
+    direction: UP
+- tapOn: Скасування замовлення
+- tapOn:
+    id: name
+    index: 4
+- tapOn:
+    id: cancel
+- assertVisible: Замовлення успішно скасоване
+#Postcondition - remove saved address
+- repeat:
+    times: 2
+    commands:
+      - tapOn: Back
+- tapOn:
+    id: user_nick_name
+- tapOn:
+    id: addresses
+- tapOn:
+    id: more
+- tapOn: Видалити
+- assertVisible: Бачу, у тебе ще немає доданих адрес
+
+
+
+
+
+
+
+
+
+
+
+
+
+

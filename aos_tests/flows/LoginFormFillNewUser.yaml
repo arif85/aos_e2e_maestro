@@ -1,0 +1,11 @@
+appId: com.rebbix.modnakasta
+---
+- tapOn:
+    id: edit_phone_email
+- inputText: maestro_new@testt.com
+- tapOn:
+    id: enter
+- inputText: 123456a
+- tapOn:
+    id: sign_up
+- tapOn: ЗРОЗУМІЛО

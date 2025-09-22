@@ -1,0 +1,6 @@
+appId: com.rebbix.modnakasta
+tags: [check]
+
+---
+- launchApp:
+   clearState: true

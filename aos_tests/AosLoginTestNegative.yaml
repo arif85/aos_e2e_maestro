@@ -1,0 +1,9 @@
+appId: com.rebbix.modnakasta
+tags: [login]
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: bonus_button
+- runFlow: flows/LoginFormFlowNegativeTest.yaml
+- assertVisible: Невірно вказаний пароль для maestro@testt.com

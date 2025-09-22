@@ -1,0 +1,21 @@
+#appId: com.rebbix.modnakasta.dev
+appId: com.rebbix.modnakasta
+tags: [login]
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: bonus_button
+- runFlow: flows/LoginFormFill.yaml
+- tapOn:
+    id: md_buttonDefaultPositive
+- tapOn: 
+    id: "bottom_tab_profile"
+- tapOn:
+    text: Так, будь ласка
+    optional: true
+- tapOn:
+    id: user_nick_name
+- tapOn:
+    id: user_info
+- assertVisible: maestro@testt.com

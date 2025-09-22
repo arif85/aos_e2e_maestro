@@ -1,0 +1,13 @@
+#appId: com.rebbix.modnakasta.dev
+tags: [rootcheck]
+appId: com.rebbix.modnakasta
+---
+- runFlow: AosLoginTest.yaml
+- tapOn:
+    id: image_up
+- tapOn:
+    text: Банк
+- tapOn: Хочу Kasta Visa Card
+- tapOn:
+    id: go_to_next_text
+- assertVisible: Банк недоступний

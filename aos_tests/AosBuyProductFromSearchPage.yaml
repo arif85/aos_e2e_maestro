@@ -1,0 +1,35 @@
+appId: com.rebbix.modnakasta
+tags: [purchase]
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: close_apptobonus_popup
+- extendedWaitUntil:
+    visible:
+      id: search_text
+    timeout: 5000
+- tapOn:
+    id: search_text
+- inputText: shoes
+- pressKey: Enter
+- tapOn: ФІЛЬТР
+- tapOn: Діють переваги Black
+- tapOn: Зі складу Kasta
+- tapOn: Чоловікам
+- tapOn:
+    id: button_done
+- tapOn:
+    id: button_buy_image_view
+    enabled: true
+- tapOn:
+    id: item_product_size_name
+    enabled: true
+- tapOn:
+    id: button_buy_text
+- tapOn:
+    id: bottom_tab_basket
+- tapOn:
+    id: checkout_button_text
+- runFlow:
+    file: flows/LoginFormFill.yaml

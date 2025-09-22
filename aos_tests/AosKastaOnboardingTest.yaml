@@ -1,0 +1,54 @@
+appId: com.rebbix.modnakasta
+# https://kastagroup.atlassian.net/projects/KQ?selectedItem=com.atlassian.plugins.atlassian-connect-plugin:com.kanoah.test-manager__main-project-page#!/v2/testCase/KQ-T2
+tags: [onboarding]
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: bonus_button
+- runFlow: flows/LoginFormFillNewUser.yaml
+- tapOn:
+    id: bonus_button_text
+- assertVisible: Почати знайомство
+- tapOn: Почати знайомство
+#- tapOn: Імʼя
+#- inputText: Анна
+#- tapOn: Прізвище
+#- inputText: Головко
+- tapOn: Жінка
+- tapOn:
+    id: next_btn
+- tapOn: Одяг
+- tapOn: Взуття
+- tapOn:
+    id: next_btn
+- assertVisible: Оберіть улюблені бренди
+- tapOn:
+    id: next_btn
+- tapOn: Верхній одяг
+- tapOn: Європейська
+- tapOn: '11.5'
+- tapOn: Зберегти
+- assertVisible:
+    id: selected_size
+- tapOn: Нижній одяг
+- tapOn: Міжнародна
+- tapOn: XS
+- tapOn:
+    id: save_button
+- assertVisible: XS
+- tapOn: Взуття
+- tapOn: '12'
+- tapOn:
+    id: save_button
+- tapOn:
+    id: next_btn
+- assertVisible: Налаштування збережено!
+- tapOn: Готово
+- tapOn:
+    id: bottom_tab_profile
+- tapOn:
+    id: user_nick_name
+- tapOn: Видалення профілю
+- tapOn: ВИДАЛИТИ
+- assertVisible: Увійти / Реєстрація

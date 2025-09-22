@@ -1,0 +1,53 @@
+#appId: com.rebbix.modnakasta.dev
+tags: [purchase]
+appId: com.rebbix.modnakasta
+---
+# Precontions
+- launchApp:
+    clearState: true
+- tapOn:
+    id: bonus_button
+- runFlow: flows/LoginFormFill.yaml
+- tapOn:
+    id: md_buttonDefaultPositive
+# Steps
+- tapOn: Каталог
+- tapOn: Побутова хімія і госптовари
+- tapOn:
+    text: Всі товари # Актуально для планшетів або фолд екранів
+    optional: true
+- tapOn:
+    id: product_content
+- tapOn:
+    id: button_buy
+- tapOn:
+    id: bottom_tab_basket
+- tapOn:
+    id: checkout_button_text
+- tapOn: Готівкою при отриманні
+- tapOn:
+    id: checkout_button
+- tapOn:
+    id: close_dialog
+    optional: true
+# Expexted resutl
+- assertVisible:
+    id: checkout_done_order_id
+#Postcondition
+- tapOn: Мої замовлення
+- tapOn: Замовлення оформлене
+- scrollUntilVisible:
+    element: Скасування замовлення
+    direction: DOWN
+    timeout: 50000
+    speed: 40
+    visibilityPercentage: 100
+- swipe:
+    direction: UP
+- tapOn: Скасування замовлення
+- tapOn:
+    id: name
+    index: 4
+- tapOn:
+    id: cancel
+- assertVisible: Замовлення успішно скасоване
