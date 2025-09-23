@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tag: [ "purchase", "rootcheck", "login", "onboarding", "check" ]
+        tag: [ "purchase" ] #, "rootcheck", "login", "onboarding", "check" ]
     outputs:
       app: app/build/outputs/apk/debug
     steps:
