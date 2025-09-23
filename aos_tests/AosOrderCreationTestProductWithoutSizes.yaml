@@ -16,6 +16,10 @@ appId: com.rebbix.modnakasta
 - tapOn:
     text: Всі товари # Актуально для планшетів або фолд екранів
     optional: true
+- scrollUntilVisible:
+    element:
+      id: product_content
+    optional: true
 - tapOn:
     id: product_content
 - tapOn:
