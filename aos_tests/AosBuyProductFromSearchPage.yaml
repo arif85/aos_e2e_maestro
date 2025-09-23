@@ -33,3 +33,5 @@ tags: [purchase]
     id: checkout_button_text
 - runFlow:
     file: flows/LoginFormFill.yaml
+- assertVisible:
+    text: Оформлення замовлення
