@@ -12,7 +12,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tag: [ "purchase" ] #, "rootcheck", "login", "onboarding", "check" ]
+        tag: [ "purchase" , "rootcheck", "login", "onboarding", "check" ]
+        api: [34, 33, 29]
     outputs:
       app: app/build/outputs/apk/debug
     steps:
@@ -44,9 +45,9 @@ jobs:
           app-file: app-debug.apk   # <-- тепер беремо APK з Google Drive
           async: false
           workspace: aos_tests
-          android-api-level: 34
           include-tags: ${{ matrix.tag }}
-
+          android-api-level: ${{ matrix.api }}
+          
       - name: Access Outputs
         if: always()
         run: |
