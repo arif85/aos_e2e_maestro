@@ -1,6 +1,6 @@
 #appId: com.rebbix.modnakasta.dev
-tags: [purchase]
 appId: com.rebbix.modnakasta
+tags: [purchase]
 ---
 # Precontions
 - launchApp:
@@ -27,8 +27,12 @@ appId: com.rebbix.modnakasta
     id: product_content
 - tapOn:
     id: button_buy
+- tapOn: 
+    text: Кошик
+    optional: true
 - tapOn:
     id: bottom_tab_basket
+    optional: true
 - tapOn:
     id: checkout_button_text
 - tapOn: Готівкою при отриманні
@@ -37,11 +41,21 @@ appId: com.rebbix.modnakasta
 - tapOn:
     id: close_dialog
     optional: true
-# Expexted resutl
-- assertVisible:
-    id: checkout_done_order_id
+# Expexted resutl- tapOn: Дякуємо, Іван, ви успішно оформили замовлення
+- assertVisible: ви успішно оформили замовлення
+
+- assertVisible: Замовлення
+- assertVisible: Доставка
+- assertVisible: Готово
+- tapOn: Готово
+- tapOn: 
+    text: Профіль
+    optional: true
+- tapOn:
+    id: bottom_tab_profile
+    optional: true
 #Postcondition
-- tapOn: Мої замовлення
+- tapOn: Замовлення
 - tapOn: Замовлення оформлене
 - scrollUntilVisible:
     element: Скасування замовлення
