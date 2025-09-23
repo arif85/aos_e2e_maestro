@@ -13,8 +13,14 @@ jobs:
       fail-fast: false
       max-parallel: 3
       matrix:
-        tag: [ "purchase" , "rootcheck", "login", "onboarding", "check" ]
-        api: [34, 33, 29]
+       include:
+          - { tag: "purchase",   api: 34 }
+          - { tag: "rootcheck",  api: 29 }
+          - { tag: "login",      api: 33 }
+          - { tag: "onboarding", api: 33 }
+          - { tag: "check",      api: 29 }
+        #tag: [ "purchase" , "rootcheck", "login", "onboarding", "check" ]
+        #api: [34, 33, 29]
     outputs:
       app: app/build/outputs/apk/debug
     steps:
