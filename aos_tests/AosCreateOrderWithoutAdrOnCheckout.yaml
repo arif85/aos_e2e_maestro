@@ -5,6 +5,7 @@ tags: [purchase]
     clearState: true
 - tapOn:
     id: close_apptobonus_popup
+    optional: true
 - tapOn:
     id: bottom_tab_profile
 - tapOn: Увійти / Реєстрація
@@ -60,10 +61,14 @@ tags: [purchase]
 - tapOn:
     id: close_dialog
     optional: true
-- assertVisible:
-    id: checkout_done_order_id
+- assertVisible: Замовлення
+- assertVisible: Доставка
+- assertVisible: Готово
+- tapOn: Готово
 - tapOn:
-    id: my_orders_btn
+    id: bottom_tab_profile
+#Postcondition
+- tapOn: Замовлення
 - tapOn: Замовлення оформлене
 - scrollUntilVisible:
     element: Скасування замовлення

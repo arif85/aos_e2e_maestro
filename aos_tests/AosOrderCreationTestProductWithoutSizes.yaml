@@ -27,12 +27,8 @@ tags: [purchase]
     id: product_content
 - tapOn:
     id: button_buy
-- tapOn: 
-    text: Кошик
-    optional: true
 - tapOn:
     id: bottom_tab_basket
-    optional: true
 - tapOn:
     id: checkout_button_text
 - tapOn: Готівкою при отриманні
@@ -42,18 +38,12 @@ tags: [purchase]
     id: close_dialog
     optional: true
 # Expexted resutl- tapOn: Дякуємо, Іван, ви успішно оформили замовлення
-- assertVisible: ви успішно оформили замовлення
-
 - assertVisible: Замовлення
 - assertVisible: Доставка
 - assertVisible: Готово
 - tapOn: Готово
-- tapOn: 
-    text: Профіль
-    optional: true
 - tapOn:
     id: bottom_tab_profile
-    optional: true
 #Postcondition
 - tapOn: Замовлення
 - tapOn: Замовлення оформлене

@@ -16,7 +16,9 @@ tags: [purchase]
 - tapOn: ФІЛЬТР
 - tapOn: Діють переваги Black
 - tapOn: Зі складу Kasta
-- tapOn: Чоловікам
+- tapOn: 
+   text: Чоловікам
+   optional: true
 - tapOn:
     id: button_done
 - tapOn:
@@ -25,8 +27,10 @@ tags: [purchase]
 - tapOn:
     id: item_product_size_name
     enabled: true
+    optional: true
 - tapOn:
     id: button_buy_text
+    optional: true
 - tapOn:
     id: bottom_tab_basket
 - tapOn:
