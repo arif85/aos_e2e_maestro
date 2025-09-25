@@ -74,12 +74,45 @@ jobs:
             -noaudio
           disable-animations: true
           script: |
-            set -e
-            $ANDROID_HOME/emulator/emulator -accel-check || true
-            adb devices
-            adb install -r "$APK_PATH"
-            mkdir -p "$REPORT_DIR"
-            maestro test "$TEST_FILE" --format junit --output "$REPORT_DIR/results.xml"
+           set -euxo pipefail
+
+           # Діагностика HVF та ADB
+           $ANDROID_HOME/emulator/emulator -accel-check || true
+           adb devices
+
+           # Перевіримо сумісність ABI: що всередині APK і що підтримує емуль
+           echo "== APK native ABIs =="
+           (unzip -l "$APK_PATH" 'lib/*/*.so' | awk '{print $4}' | cut -d/ -f2 | sort -u) || echo "no native libs"
+           echo "== Device ABIs =="
+           adb shell getprop ro.product.cpu.abilist || true
+
+           # Трошки часу девайсу "прокинутись" перед інсталом
+           adb wait-for-device
+           adb shell getprop sys.boot_completed
+
+           # Перевіримо вільне місце на /data (на всяк випадок)
+           adb shell df -h /data || true
+           # Стабільна інсталяція: без streaming. Якщо не вийшло — fallback через push + pm install
+           set +e
+           adb install --no-streaming -r "$APK_PATH"
+           INSTALL_RC=$?
+           if [ $INSTALL_RC -ne 0 ]; then
+            echo "Streamed install failed (rc=$INSTALL_RC). Fallback to push + pm install..."
+            adb push "$APK_PATH" /data/local/tmp/app.apk
+            adb shell pm install -t -r /data/local/tmp/app.apk
+            INSTALL_RC=$?
+           fi
+           set -e
+
+           if [ $INSTALL_RC -ne 0 ]; then
+            echo "::error::APK install failed. Ймовірна причина — ABI mismatch (наприклад, APK arm64-only, а емуль x86_64)."
+            echo "Див. 'APK native ABIs' vs 'Device ABIs' вище."
+           exit $INSTALL_RC
+           fi
+
+           mkdir -p "$REPORT_DIR"
+           maestro test "$TEST_FILE" --format junit --output "$REPORT_DIR/results.xml"
+
 
       - name: Upload Maestro report
         if: always()
