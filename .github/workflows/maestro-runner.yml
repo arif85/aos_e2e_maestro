@@ -51,7 +51,7 @@ jobs:
       - name: Run Maestro on Android emulator (API 33)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33
+          api-level: 34
           arch: arm64-v8a                 # (без змін) для macOS ARM
           target: google_apis             # ⬅️ було: default
           profile: pixel_6                # ⬅️ було: pixel_5
