@@ -7,7 +7,7 @@ on:
 
 jobs:
   run-maestro:
-    runs-on: macos-14 #ubuntu-latest
+    runs-on: macos-13   # ⬅️ CHANGED (було macos-14)
     timeout-minutes: 60
 
     env:
@@ -43,34 +43,31 @@ jobs:
           APK_PATH: ${{ env.APK_PATH }}
         run: |
           test -n "$GDRIVE_URL" || { echo "Secret GDRIVE_URL is missing"; exit 1; }
-          # gdown підтримує звичайні share-посилання і посилання з id=
           gdown --fuzzy "$GDRIVE_URL" -O "$APK_PATH"
           test -s "$APK_PATH" || { echo "Downloaded APK is empty"; exit 1; }
           ls -lh "$APK_PATH"
 
-      # NEW: заздалегідь ставимо ARM-образи для API 34, щоб не чекати завантаження під час бута
-      - name: Preinstall Android 34 system image (ARM)
+      # ⬅️ CHANGED: підкачуємо x86_64 образ для API 33 (стабільний на macos-13)
+      - name: Preinstall Android 33 system image (x86_64)
         run: |
-          sdkmanager --install "platforms;android-34" \
-            "system-images;android-34;google_apis;arm64-v8a" \
+          sdkmanager --install "platforms;android-33" \
+            "system-images;android-33;google_apis;x86_64" \
             "emulator" "platform-tools"
 
-      - name: Run Maestro on Android emulator (API 34)
+      # ⬅️ CHANGED: x86_64 конфіг на macOS-13
+      - name: Run Maestro on Android emulator (API 33)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
-          arch: arm64-v8a                 # для macOS ARM
-          target: google_apis
-          profile: pixel_6
-          avd-name: ci-api34-arm
-          cores: 4
-          ram-size: 4096
-          heap-size: 576
+          api-level: 33                 # ⬅️ CHANGED (замість 34)
+          arch: x86_64                  # ⬅️ CHANGED (було arm64-v8a)
+          target: google_apis           # лишаємо google_apis
+          profile: pixel_5              # стабільний профіль під x86_64
+          avd-name: ci-api33-x86        # ⬅️ CHANGED (нове ім’я AVD)
           force-avd-creation: true
-          emulator-boot-timeout: 1200
+          emulator-boot-timeout: 900
           emulator-options: >-
-            -accel hvf
-            -wipe-data -no-snapshot
+            -wipe-data
+            -no-snapshot-load -no-snapshot-save
             -no-window -no-boot-anim
             -gpu swiftshader_indirect
             -camera-back none -camera-front none
@@ -100,6 +97,7 @@ jobs:
           path: .maestro/**/*
           if-no-files-found: warn
 
+      # ⬅️ CHANGED: додаємо пошук логів для нового AVD і, про всяк, старого ARM
       - name: Debug dump on failure
         if: failure()
         run: |
@@ -107,7 +105,7 @@ jobs:
           $ANDROID_HOME/emulator/emulator -version || true
           adb version || true
           echo "== AVD dir ==" && ls -la ~/.android/avd || true
-          tail -n +1 ~/.android/avd/ci-api34-arm.avd/*.log || true
+          tail -n +1 ~/.android/avd/ci-api33-x86.avd/*.log ~/.android/avd/ci-api34-arm.avd/*.log 2>/dev/null || true
           echo "== ADB status ==" && adb devices || true
           adb shell getprop sys.boot_completed || true
           adb shell getprop init.svc.bootanim || true
