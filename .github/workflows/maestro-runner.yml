@@ -48,7 +48,7 @@ jobs:
           test -s "$APK_PATH" || { echo "Downloaded APK is empty"; exit 1; }
           ls -lh "$APK_PATH"
 
-      - name: Run Maestro on Android emulator (API 33)
+      - name: Run Maestro on Android emulator (API 34)
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -60,11 +60,12 @@ jobs:
           ram-size: 4096
           heap-size: 576
           force-avd-creation: true        # ⬅️ пересоздаємо AVD щоразу
-          emulator-boot-timeout: 900      # ⬅️ більше часу на перший бут
+          emulator-boot-timeout: 1200      # ⬅️ більше часу на перший бут
           emulator-options: >-            # ⬅️ чистий headless-старт
+            -accel hvf
             -wipe-data -no-snapshot
             -no-window -no-boot-anim
-            -gpu host
+            -gpu swiftshader_indirect
             -camera-back none -camera-front none
             -noaudio
           disable-animations: true
@@ -92,4 +93,17 @@ jobs:
           name: maestro-session-artifacts
           path: .maestro/**/*
           if-no-files-found: warn
+
+      - name: Debug dump on failure
+        if: failure()
+        run: |
+          $ANDROID_HOME/emulator/emulator -accel-check || true
+          $ANDROID_HOME/emulator/emulator -version || true
+          adb version || true
+          echo "== AVD dir ==" && ls -la ~/.android/avd || true
+          tail -n +1 ~/.android/avd/ci-api34-arm.avd/*.log || true
+          echo "== ADB status ==" && adb devices || true
+          adb shell getprop sys.boot_completed || true
+          adb shell getprop init.svc.bootanim || true
+          df -h ~ || true
 
