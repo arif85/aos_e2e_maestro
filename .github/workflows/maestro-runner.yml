@@ -7,7 +7,7 @@ on:
 
 jobs:
   run-maestro:
-    runs-on: macos-13   # ⬅️ CHANGED (було macos-14)
+    runs-on: macos-13
     timeout-minutes: 60
 
     env:
@@ -33,7 +33,6 @@ jobs:
           curl -Ls "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
-      # --- Download APK from Google Drive via secret GDRIVE_URL ---
       - name: Install gdown (for Google Drive)
         run: python -m pip install --upgrade pip gdown
 
@@ -47,22 +46,22 @@ jobs:
           test -s "$APK_PATH" || { echo "Downloaded APK is empty"; exit 1; }
           ls -lh "$APK_PATH"
 
-      # ⬅️ CHANGED: підкачуємо x86_64 образ для API 33 (стабільний на macos-13)
-      - name: Preinstall Android 33 system image (x86_64)
+      # CHANGED: попередньо ставимо образи API 34 (x86_64)
+      - name: Preinstall Android 34 system image (x86_64)
         run: |
-          sdkmanager --install "platforms;android-33" \
-            "system-images;android-33;google_apis;x86_64" \
+          sdkmanager --install "platforms;android-34" \
+            "system-images;android-34;google_apis;x86_64" \
             "emulator" "platform-tools"
 
-      # ⬅️ CHANGED: x86_64 конфіг на macOS-13
-      - name: Run Maestro on Android emulator (API 33)
+      # CHANGED: macOS-13 + API 34 x86_64 (стабільніше для install)
+      - name: Run Maestro on Android emulator (API 34)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33                 # ⬅️ CHANGED (замість 34)
-          arch: x86_64                  # ⬅️ CHANGED (було arm64-v8a)
-          target: google_apis           # лишаємо google_apis
-          profile: pixel_5              # стабільний профіль під x86_64
-          avd-name: ci-api33-x86        # ⬅️ CHANGED (нове ім’я AVD)
+          api-level: 34                 # CHANGED (було 33)
+          arch: x86_64                  # x86_64 для macOS-13
+          target: google_apis
+          profile: pixel_5
+          avd-name: ci-api34-x86        # CHANGED (нове ім’я AVD)
           force-avd-creation: true
           emulator-boot-timeout: 900
           emulator-options: >-
@@ -74,45 +73,69 @@ jobs:
             -noaudio
           disable-animations: true
           script: |
-           set -euxo pipefail
+            set -euxo pipefail
 
-           # Діагностика HVF та ADB
-           $ANDROID_HOME/emulator/emulator -accel-check || true
-           adb devices
+            # Переконаємось, що девайс повністю готовий
+            adb wait-for-device
+            # Чекаємо sys.boot_completed
+            for i in {1..60}; do
+              BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+              [ "$BOOT" = "1" ] && break
+              sleep 2
+            done
+            # Чекаємо готовність package manager (pm)
+            for i in {1..30}; do
+              adb shell pm path android && break || true
+              sleep 2
+            done
 
-           # Перевіримо сумісність ABI: що всередині APK і що підтримує емуль
-           echo "== APK native ABIs =="
-           (unzip -l "$APK_PATH" 'lib/*/*.so' | awk '{print $4}' | cut -d/ -f2 | sort -u) || echo "no native libs"
-           echo "== Device ABIs =="
-           adb shell getprop ro.product.cpu.abilist || true
+            echo "== Device ABIs ==" && adb shell getprop ro.product.cpu.abilist || true
+            echo "== APK native ABIs ==" && (unzip -l "$APK_PATH" 'lib/*/*.so' | awk '{print $4}' | cut -d/ -f2 | sort -u) || echo "no native libs"
+            adb shell df -h /data || true
 
-           # Трошки часу девайсу "прокинутись" перед інсталом
-           adb wait-for-device
-           adb shell getprop sys.boot_completed
+            # Вимикаємо перевірник встановлень з ADB (зменшує флакі)
+            adb shell settings put global verifier_verify_adb_installs 0 || true
+            adb shell settings put global package_verifier_enable 0 || true
 
-           # Перевіримо вільне місце на /data (на всяк випадок)
-           adb shell df -h /data || true
-           # Стабільна інсталяція: без streaming. Якщо не вийшло — fallback через push + pm install
-           set +e
-           adb install --no-streaming -r "$APK_PATH"
-           INSTALL_RC=$?
-           if [ $INSTALL_RC -ne 0 ]; then
-            echo "Streamed install failed (rc=$INSTALL_RC). Fallback to push + pm install..."
-            adb push "$APK_PATH" /data/local/tmp/app.apk
-            adb shell pm install -t -r /data/local/tmp/app.apk
-            INSTALL_RC=$?
-           fi
-           set -e
+            # Стабільна інсталяція з ретраями (без streaming)
+            install_try () {
+              echo ">>> Try install (no-streaming)"
+              adb install -t -g --no-incremental --no-streaming "$APK_PATH"
+            }
 
-           if [ $INSTALL_RC -ne 0 ]; then
-            echo "::error::APK install failed. Ймовірна причина — ABI mismatch (наприклад, APK arm64-only, а емуль x86_64)."
-            echo "Див. 'APK native ABIs' vs 'Device ABIs' вище."
-           exit $INSTALL_RC
-           fi
+            fallback_pm () {
+              echo ">>> Fallback: push + pm install"
+              adb push "$APK_PATH" /data/local/tmp/app.apk
+              adb shell pm install -t -r /data/local/tmp/app.apk
+            }
 
-           mkdir -p "$REPORT_DIR"
-           maestro test "$TEST_FILE" --format junit --output "$REPORT_DIR/results.xml"
+            set +e
+            install_try
+            RC=$?
+            if [ $RC -ne 0 ]; then
+              echo "Install rc=$RC, retrying after ADB reconnect..."
+              adb kill-server; sleep 2; adb start-server
+              adb wait-for-device
+              sleep 3
+              install_try
+              RC=$?
+            fi
+            if [ $RC -ne 0 ]; then
+              echo "Second attempt failed, trying fallback pm..."
+              fallback_pm
+              RC=$?
+            fi
+            set -e
 
+            if [ $RC -ne 0 ]; then
+              echo "::error::APK install failed with rc=$RC (можливий збій PackageManager)."
+              # Зберемо трохи діагностики перед фейлом
+              adb logcat -d | tail -n 300 || true
+              exit $RC
+            fi
+
+            mkdir -p "$REPORT_DIR"
+            maestro test "$TEST_FILE" --format junit --output "$REPORT_DIR/results.xml"
 
       - name: Upload Maestro report
         if: always()
@@ -130,7 +153,7 @@ jobs:
           path: .maestro/**/*
           if-no-files-found: warn
 
-      # ⬅️ CHANGED: додаємо пошук логів для нового AVD і, про всяк, старого ARM
+      # CHANGED: додаємо logcat при фейлі для аналізу Package Manager
       - name: Debug dump on failure
         if: failure()
         run: |
@@ -138,8 +161,9 @@ jobs:
           $ANDROID_HOME/emulator/emulator -version || true
           adb version || true
           echo "== AVD dir ==" && ls -la ~/.android/avd || true
-          tail -n +1 ~/.android/avd/ci-api33-x86.avd/*.log ~/.android/avd/ci-api34-arm.avd/*.log 2>/dev/null || true
+          tail -n +1 ~/.android/avd/ci-api34-x86.avd/*.log 2>/dev/null || true
           echo "== ADB status ==" && adb devices || true
           adb shell getprop sys.boot_completed || true
           adb shell getprop init.svc.bootanim || true
+          echo "== tail logcat ==" && adb logcat -d | tail -n 300 || true
           df -h ~ || true
