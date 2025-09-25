@@ -7,7 +7,7 @@ on:
 
 jobs:
   run-maestro:
-    runs-on: ubuntu-latest
+    runs-on: macos-14 #ubuntu-latest
     timeout-minutes: 60
 
     env:
@@ -52,7 +52,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 33
-          arch: x86_64
+          arch: arm64-v8a #x86_64
           target: default
           profile: pixel_5
           avd-name: ci-api33
