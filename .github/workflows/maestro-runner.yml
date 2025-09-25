@@ -48,20 +48,27 @@ jobs:
           test -s "$APK_PATH" || { echo "Downloaded APK is empty"; exit 1; }
           ls -lh "$APK_PATH"
 
+      # NEW: заздалегідь ставимо ARM-образи для API 34, щоб не чекати завантаження під час бута
+      - name: Preinstall Android 34 system image (ARM)
+        run: |
+          sdkmanager --install "platforms;android-34" \
+            "system-images;android-34;google_apis;arm64-v8a" \
+            "emulator" "platform-tools"
+
       - name: Run Maestro on Android emulator (API 34)
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          arch: arm64-v8a                 # (без змін) для macOS ARM
-          target: google_apis             # ⬅️ було: default
-          profile: pixel_6                # ⬅️ було: pixel_5
-          avd-name: ci-api33-arm          # ⬅️ інша назва, щоб уникнути битого AVD
+          arch: arm64-v8a                 # для macOS ARM
+          target: google_apis
+          profile: pixel_6
+          avd-name: ci-api34-arm
           cores: 4
           ram-size: 4096
           heap-size: 576
-          force-avd-creation: true        # ⬅️ пересоздаємо AVD щоразу
-          emulator-boot-timeout: 1200      # ⬅️ більше часу на перший бут
-          emulator-options: >-            # ⬅️ чистий headless-старт
+          force-avd-creation: true
+          emulator-boot-timeout: 1200
+          emulator-options: >-
             -accel hvf
             -wipe-data -no-snapshot
             -no-window -no-boot-anim
@@ -76,7 +83,6 @@ jobs:
             adb install -r "$APK_PATH"
             mkdir -p "$REPORT_DIR"
             maestro test "$TEST_FILE" --format junit --output "$REPORT_DIR/results.xml"
-
 
       - name: Upload Maestro report
         if: always()
@@ -106,4 +112,3 @@ jobs:
           adb shell getprop sys.boot_completed || true
           adb shell getprop init.svc.bootanim || true
           df -h ~ || true
-
