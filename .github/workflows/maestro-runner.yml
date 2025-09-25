@@ -73,69 +73,33 @@ jobs:
             -noaudio
           disable-animations: true
           script: |
-            set -euxo pipefail
+             set -e
+             # Переконаємось, що девайс уже видимий
+             adb wait-for-device
+ 
+             # Дочекаємося повного бута (в один рядок через bash -lc)
+             bash -lc 'for i in {1..60}; do BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r"); [ "$BOOT" = "1" ] && exit 0; sleep 2; done; exit 0'
 
-            # Переконаємось, що девайс повністю готовий
-            adb wait-for-device
-            # Чекаємо sys.boot_completed
-            for i in {1..60}; do
-              BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
-              [ "$BOOT" = "1" ] && break
-              sleep 2
-            done
-            # Чекаємо готовність package manager (pm)
-            for i in {1..30}; do
-              adb shell pm path android && break || true
-              sleep 2
-            done
+             # Невелика перевірка готовності package manager (так само одним рядком)
+             bash -lc 'for i in {1..30}; do adb shell pm path android >/dev/null 2>&1 && exit 0 || sleep 2; done; exit 0'
 
-            echo "== Device ABIs ==" && adb shell getprop ro.product.cpu.abilist || true
-            echo "== APK native ABIs ==" && (unzip -l "$APK_PATH" 'lib/*/*.so' | awk '{print $4}' | cut -d/ -f2 | sort -u) || echo "no native libs"
-            adb shell df -h /data || true
+             # Трохи діагностики (корисно, але без циклів)
+             echo "== Device ABIs ==" && adb shell getprop ro.product.cpu.abilist || true
+             echo "== APK native ABIs ==" && (unzip -l "$APK_PATH" "lib/*/*.so" | awk "{print \$4}" | cut -d/ -f2 | sort -u) || echo "no native libs"
+             adb shell df -h /data || true
+ 
+             # Менше флакі під час інсталяції
+             adb shell settings put global verifier_verify_adb_installs 0 || true
+             adb shell settings put global package_verifier_enable 0 || true
 
-            # Вимикаємо перевірник встановлень з ADB (зменшує флакі)
-            adb shell settings put global verifier_verify_adb_installs 0 || true
-            adb shell settings put global package_verifier_enable 0 || true
+             # Інсталяція без streaming з fallback на push+pm (в один рядок)
+             adb install -t -g --no-incremental --no-streaming "$APK_PATH" \
+             || (adb push "$APK_PATH" /data/local/tmp/app.apk && adb shell pm install -t -r /data/local/tmp/app.apk)
 
-            # Стабільна інсталяція з ретраями (без streaming)
-            install_try () {
-              echo ">>> Try install (no-streaming)"
-              adb install -t -g --no-incremental --no-streaming "$APK_PATH"
-            }
+             # Запуск тесту і звіт у папку
+             mkdir -p "$REPORT_DIR"
+             maestro test "$TEST_FILE" --format junit --output "$REPORT_DIR/results.xml"
 
-            fallback_pm () {
-              echo ">>> Fallback: push + pm install"
-              adb push "$APK_PATH" /data/local/tmp/app.apk
-              adb shell pm install -t -r /data/local/tmp/app.apk
-            }
-
-            set +e
-            install_try
-            RC=$?
-            if [ $RC -ne 0 ]; then
-              echo "Install rc=$RC, retrying after ADB reconnect..."
-              adb kill-server; sleep 2; adb start-server
-              adb wait-for-device
-              sleep 3
-              install_try
-              RC=$?
-            fi
-            if [ $RC -ne 0 ]; then
-              echo "Second attempt failed, trying fallback pm..."
-              fallback_pm
-              RC=$?
-            fi
-            set -e
-
-            if [ $RC -ne 0 ]; then
-              echo "::error::APK install failed with rc=$RC (можливий збій PackageManager)."
-              # Зберемо трохи діагностики перед фейлом
-              adb logcat -d | tail -n 300 || true
-              exit $RC
-            fi
-
-            mkdir -p "$REPORT_DIR"
-            maestro test "$TEST_FILE" --format junit --output "$REPORT_DIR/results.xml"
 
       - name: Upload Maestro report
         if: always()
