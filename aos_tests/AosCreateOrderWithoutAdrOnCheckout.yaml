@@ -3,6 +3,10 @@ tags: [purchase]
 ---
 - launchApp:
     clearState: true
+- extendedWaitUntil:
+    visible:
+      id: close_apptobonus_popup
+    timeout: 10000
 - tapOn:
     id: close_apptobonus_popup
     optional: true
