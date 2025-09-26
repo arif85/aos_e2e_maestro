@@ -80,8 +80,8 @@ jobs:
             adb devices
             adb install -r "$APK_PATH"
             mkdir -p "$REPORT_DIR"
-            # CHANGED: html-репорт у папку (з asset-ами)
-            maestro --verbose test "$TEST_FILE" --format html --output "$REPORT_DIR/results.html"
+            # html-репорт + зберігаємо скріни/логи фейлів у вказану теку
+            maestro --verbose test "$TEST_FILE" --format html --output "$REPORT_DIR/results.html" --test-output-dir "$REPORT_DIR/test-output"
 
       # NEW: зняти скрін з емулю завжди (навіть якщо тест впав)
       - name: Capture emulator screenshot
@@ -97,7 +97,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: maestro-report
-          # CHANGED: аплоудимо всю папку з HTML (index.html + assets)
+          # аплоудимо всю папку з HTML (index.html + assets) і тестовим виводом
           path: ${{ env.REPORT_DIR }}/**
           if-no-files-found: warn
 
