@@ -92,6 +92,19 @@ jobs:
           path: ${{ env.REPORT_DIR }}/**
           if-no-files-found: warn
 
+      # ⬇️ NEW: окремі скріншоти (зі звіту та з .maestro)
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-screenshots
+          path: |
+            ${{ env.REPORT_DIR }}/**/*.png
+            ${{ env.REPORT_DIR }}/**/*.jpg
+            .maestro/**/*.png
+            .maestro/**/*.jpg
+          if-no-files-found: ignore
+
       - name: Upload Maestro session artifacts
         if: always()
         uses: actions/upload-artifact@v4
