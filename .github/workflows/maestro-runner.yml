@@ -12,7 +12,7 @@ jobs:
 
     env:
       APK_PATH: app-under-test.apk
-      TEST_FILE: aos_tests/AosOrderCreationTestProductWithoutSizes.yaml
+      TEST_FILE: aos_tests
       REPORT_DIR: maestro-report
 
     steps:
