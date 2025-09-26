@@ -12,7 +12,7 @@ jobs:
 
     env:
       APK_PATH: app-under-test.apk
-      TEST_FILE: aos_tests/AosBuyProductFromSearchPage.yaml
+      TEST_FILE: aos_tests/AosCheckRootMsg.yaml
       REPORT_DIR: maestro-report
 
     steps:
