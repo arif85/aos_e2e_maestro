@@ -4,20 +4,18 @@ tags: [login]
 ---
 - launchApp:
     clearState: true
-- assertVisible:
+- tapOn:
     id: bonus_button
-#- tapOn:
-#    id: bonus_button
-#- runFlow: flows/LoginFormFill.yaml
-#- tapOn:
+- runFlow: flows/LoginFormFill.yaml
+- tapOn:
     #id: md_buttonDefaultPositive
-#- tapOn: 
+- tapOn: 
     #id: "bottom_tab_profile"
-#- tapOn:
+- tapOn:
     #text: Так, будь ласка
     #optional: true
-#- tapOn:
+- tapOn:
     #id: user_nick_name
-#- tapOn:
+- tapOn:
     #id: user_info
-#- assertVisible: maestro@testt.com
+- assertVisible: maestro@testt.com
