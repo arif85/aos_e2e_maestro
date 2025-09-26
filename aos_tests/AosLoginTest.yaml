@@ -5,7 +5,7 @@ tags: [login]
 - launchApp:
     clearState: true
 - assertVisible:
-   id: bonus_button
+    id: bonus_button
 #- tapOn:
 #    id: bonus_button
 #- runFlow: flows/LoginFormFill.yaml
