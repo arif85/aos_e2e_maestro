@@ -81,7 +81,7 @@ jobs:
             adb install -r "$APK_PATH"
             mkdir -p "$REPORT_DIR"
             # CHANGED: html-репорт у папку (з asset-ами)
-            maestro test "$TEST_FILE" --format html --output-folder "$REPORT_DIR"
+            maestro test "$TEST_FILE" --format html --output "$REPORT_DIR"
 
       - name: Upload Maestro report
         if: always()
