@@ -7,7 +7,7 @@ on:
 
 jobs:
   run-maestro:
-    runs-on: macos-13
+    runs-on: ubuntu-latest
     timeout-minutes: 60
 
     env:
@@ -18,6 +18,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -33,6 +38,7 @@ jobs:
           curl -Ls "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
+      # --- Download APK from Google Drive via secret GDRIVE_URL ---
       - name: Install gdown (for Google Drive)
         run: python -m pip install --upgrade pip gdown
 
@@ -42,64 +48,31 @@ jobs:
           APK_PATH: ${{ env.APK_PATH }}
         run: |
           test -n "$GDRIVE_URL" || { echo "Secret GDRIVE_URL is missing"; exit 1; }
+          # gdown підтримує звичайні share-посилання і посилання з id=
           gdown --fuzzy "$GDRIVE_URL" -O "$APK_PATH"
           test -s "$APK_PATH" || { echo "Downloaded APK is empty"; exit 1; }
           ls -lh "$APK_PATH"
 
-      # CHANGED: попередньо ставимо образи API 34 (x86_64)
-      - name: Preinstall Android 34 system image (x86_64)
-        run: |
-          sdkmanager --install "platforms;android-34" \
-            "system-images;android-34;google_apis;x86_64" \
-            "emulator" "platform-tools"
-
-      # CHANGED: macOS-13 + API 34 x86_64 (стабільніше для install)
-      - name: Run Maestro on Android emulator (API 34)
+      - name: Run Maestro on Android emulator (API 33)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34                 # CHANGED (було 33)
-          arch: x86_64                  # x86_64 для macOS-13
-          target: google_apis
+          api-level: 33
+          arch: x86_64
+          target: default
           profile: pixel_5
-          avd-name: ci-api34-x86        # CHANGED (нове ім’я AVD)
-          force-avd-creation: true
-          emulator-boot-timeout: 900
-          emulator-options: >-
-            -wipe-data
-            -no-snapshot-load -no-snapshot-save
-            -no-window -no-boot-anim
-            -gpu swiftshader_indirect
-            -camera-back none -camera-front none
-            -noaudio
+          avd-name: ci-api33
+          cores: 4
+          ram-size: 4096
+          heap-size: 576
+          force-avd-creation: false
+          emulator-options: -no-window -noaudio -no-boot-anim -gpu host 
           disable-animations: true
           script: |
-             set -e
-             # Переконаємось, що девайс уже видимий
-             adb wait-for-device
- 
-             # Дочекаємося повного бута (в один рядок через bash -lc)
-             bash -lc 'for i in {1..60}; do BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r"); [ "$BOOT" = "1" ] && exit 0; sleep 2; done; exit 0'
-
-             # Невелика перевірка готовності package manager (так само одним рядком)
-             bash -lc 'for i in {1..30}; do adb shell pm path android >/dev/null 2>&1 && exit 0 || sleep 2; done; exit 0'
-
-             # Трохи діагностики (корисно, але без циклів)
-             echo "== Device ABIs ==" && adb shell getprop ro.product.cpu.abilist || true
-             echo "== APK native ABIs ==" && (unzip -l "$APK_PATH" "lib/*/*.so" | awk "{print \$4}" | cut -d/ -f2 | sort -u) || echo "no native libs"
-             adb shell df -h /data || true
- 
-             # Менше флакі під час інсталяції
-             adb shell settings put global verifier_verify_adb_installs 0 || true
-             adb shell settings put global package_verifier_enable 0 || true
-
-             # Інсталяція без streaming з fallback на push+pm (в один рядок)
-             adb install -t -g --no-incremental --no-streaming "$APK_PATH" \
-             || (adb push "$APK_PATH" /data/local/tmp/app.apk && adb shell pm install -t -r /data/local/tmp/app.apk)
-
-             # Запуск тесту і звіт у папку
-             mkdir -p "$REPORT_DIR"
-             maestro test "$TEST_FILE" --format junit --output "$REPORT_DIR/results.xml"
-
+            set -e
+            adb devices
+            adb install -r "$APK_PATH"
+            mkdir -p "$REPORT_DIR"
+            maestro test "$TEST_FILE" --format junit --output "$REPORT_DIR/results.xml"
 
       - name: Upload Maestro report
         if: always()
@@ -117,17 +90,3 @@ jobs:
           path: .maestro/**/*
           if-no-files-found: warn
 
-      # CHANGED: додаємо logcat при фейлі для аналізу Package Manager
-      - name: Debug dump on failure
-        if: failure()
-        run: |
-          $ANDROID_HOME/emulator/emulator -accel-check || true
-          $ANDROID_HOME/emulator/emulator -version || true
-          adb version || true
-          echo "== AVD dir ==" && ls -la ~/.android/avd || true
-          tail -n +1 ~/.android/avd/ci-api34-x86.avd/*.log 2>/dev/null || true
-          echo "== ADB status ==" && adb devices || true
-          adb shell getprop sys.boot_completed || true
-          adb shell getprop init.svc.bootanim || true
-          echo "== tail logcat ==" && adb logcat -d | tail -n 300 || true
-          df -h ~ || true
