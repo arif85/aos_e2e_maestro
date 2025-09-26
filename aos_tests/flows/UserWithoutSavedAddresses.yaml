@@ -1,6 +1,9 @@
 appId: com.rebbix.modnakasta
 ---
 - tapOn:
+    text: OK
+    optional: true
+- tapOn:
     id: edit_phone_email
 - inputText: maestro_noadr@testt.com
 - tapOn:
