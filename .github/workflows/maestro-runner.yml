@@ -83,14 +83,6 @@ jobs:
             # html-репорт + зберігаємо скріни/логи фейлів у вказану теку
             maestro --verbose test "$TEST_FILE" --format html --output "$REPORT_DIR/results.html" --test-output-dir "$REPORT_DIR/test-output"
 
-      # NEW: зняти скрін з емулю завжди (навіть якщо тест впав)
-      - name: Capture emulator screenshot
-        if: always()
-        run: |
-          mkdir -p "$REPORT_DIR/screenshots"
-          adb wait-for-device || true
-          adb exec-out screencap -p > "$REPORT_DIR/screenshots/final.png" || true
-          ls -la "$REPORT_DIR/screenshots" || true
 
       - name: Upload Maestro report
         if: always()
