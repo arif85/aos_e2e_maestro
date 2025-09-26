@@ -8,14 +8,14 @@ tags: [login]
     id: bonus_button
 - runFlow: flows/LoginFormFill.yaml
 - tapOn:
-    #id: md_buttonDefaultPositive
+    id: md_buttonDefaultPositive
 - tapOn: 
-    #id: "bottom_tab_profile"
+    id: "bottom_tab_profile"
 - tapOn:
-    #text: Так, будь ласка
-    #optional: true
+    text: Так, будь ласка
+    optional: true
 - tapOn:
-    #id: user_nick_name
+    id: user_nick_name
 - tapOn:
-    #id: user_info
+    id: user_info
 - assertVisible: maestro@testt.com
