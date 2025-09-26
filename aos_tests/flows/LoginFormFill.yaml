@@ -1,5 +1,7 @@
 appId: com.rebbix.modnakasta
 ---
+- assertVisible:
+    id: edit_phone_email
 - tapOn:
     id: edit_phone_email
 - inputText: maestro@testt.com
