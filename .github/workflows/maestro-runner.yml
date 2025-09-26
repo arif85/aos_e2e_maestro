@@ -80,14 +80,16 @@ jobs:
             adb devices
             adb install -r "$APK_PATH"
             mkdir -p "$REPORT_DIR"
-            maestro test "$TEST_FILE" --format junit --output "$REPORT_DIR/results.xml"
+            # CHANGED: html-репорт у папку (з asset-ами)
+            maestro test "$TEST_FILE" --format html --output-folder "$REPORT_DIR"
 
       - name: Upload Maestro report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: maestro-report
-          path: ${{ env.REPORT_DIR }}/results.xml
+          # CHANGED: аплоудимо всю папку з HTML (index.html + assets)
+          path: ${{ env.REPORT_DIR }}/**
           if-no-files-found: warn
 
       - name: Upload Maestro session artifacts
