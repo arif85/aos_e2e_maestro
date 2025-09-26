@@ -63,11 +63,11 @@ jobs:
       - name: Run Maestro on Android emulator (API 33)
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33
+          api-level: 34
           arch: x86_64
           target: default
-          profile: pixel_5
-          avd-name: ci-api33
+          profile: pixel_6
+          avd-name: ci-api34
           cores: 4
           ram-size: 4096
           heap-size: 576
