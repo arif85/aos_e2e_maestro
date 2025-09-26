@@ -83,6 +83,15 @@ jobs:
             # CHANGED: html-репорт у папку (з asset-ами)
             maestro --verbose test "$TEST_FILE" --format html --output "$REPORT_DIR/results.html"
 
+      # NEW: зняти скрін з емулю завжди (навіть якщо тест впав)
+      - name: Capture emulator screenshot
+        if: always()
+        run: |
+          mkdir -p "$REPORT_DIR/screenshots"
+          adb wait-for-device || true
+          adb exec-out screencap -p > "$REPORT_DIR/screenshots/final.png" || true
+          ls -la "$REPORT_DIR/screenshots" || true
+
       - name: Upload Maestro report
         if: always()
         uses: actions/upload-artifact@v4
@@ -92,7 +101,7 @@ jobs:
           path: ${{ env.REPORT_DIR }}/**
           if-no-files-found: warn
 
-      # ⬇️ NEW: окремі скріншоти (зі звіту та з .maestro)
+      # ⬇️ блок аплоаду скрінів (не змінював)
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
