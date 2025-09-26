@@ -1,5 +1,8 @@
 appId: com.rebbix.modnakasta
 ---
+- tapOn:
+    text: OK
+    optional: true
 - assertVisible: Вхід і реєстрація
 - assertVisible:
     id: edit_phone_email
